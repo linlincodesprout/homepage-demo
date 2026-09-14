@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>彭涵琳 | 金融量化 · 数据与模型的实践者</title>
+<meta name="description" content="彭涵琳，复旦大学经济学院金融（量化投资）硕士在读。数理经济出身，用数据、代码与模型解决投研问题。" />
+<meta name="robots" content="noindex, nofollow, noarchive" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif'>P</text></svg>" />
+<style>
+  :root {
+    --ink: #0f172a;
+    --ink-soft: #3f4b63;
+    --ink-mute: #6b7891;
+    --line: #e6eaf2;
+    --bg: #f6f8fc;
+    --card: #ffffff;
+    --accent: #2563eb;
+    --accent-2: #7c3aed;
+    --accent-soft: #eef3ff;
+    --radius: 18px;
+    --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 12px 32px -12px rgba(15, 23, 42, .16);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .wrap { width: min(1080px, 100% - 48px); margin: 0 auto; }
+
+  /* ---------- 顶部导航 ---------- */
+  header.nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: saturate(180%) blur(14px);
+    background: rgba(246, 248, 252, .82);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s ease, background .3s ease;
+  }
+  header.nav.scrolled { border-bottom-color: var(--line); background: rgba(246, 248, 252, .94); }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .01em; }
+  .brand .dot {
+    width: 30px; height: 30px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff; display: grid; place-items: center;
+    font-size: 15px; font-weight: 700;
+    box-shadow: 0 6px 16px -6px rgba(37, 99, 235, .8);
+  }
+  .nav-links { display: flex; gap: 6px; align-items: center; }
+  .nav-links a {
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 14.5px; color: var(--ink-soft);
+    transition: background .2s ease, color .2s ease;
+  }
+  .nav-links a:hover { background: #fff; color: var(--accent); box-shadow: var(--shadow); }
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 999px;
+    background: var(--ink); color: #fff; font-size: 14.5px;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -10px rgba(15, 23, 42, .8); }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; overflow: hidden; padding: 84px 0 72px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -30% -20% auto -20%; height: 640px;
+    background:
+      radial-gradient(46% 60% at 22% 12%, rgba(37, 99, 235, .18), transparent 70%),
+      radial-gradient(40% 56% at 82% 4%, rgba(124, 58, 237, .16), transparent 70%);
+    filter: blur(6px); pointer-events: none;
+  }
+  .hero-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.55fr .95fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px 6px 10px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--line);
+    font-size: 13.5px; color: var(--ink-soft); box-shadow: var(--shadow);
+  }
+  .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: #16a34a;
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, .55); animation: pulse 2.4s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(22, 163, 74, .5); }
+    70%  { box-shadow: 0 0 0 9px rgba(22, 163, 74, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+  }
+  h1 {
+    margin: 22px 0 0;
+    font-size: clamp(40px, 6vw, 62px);
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    font-weight: 800;
+  }
+  h1 .grad {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2) 70%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede {
+    margin: 20px 0 0; max-width: 33em;
+    font-size: 17.5px; color: var(--ink-soft);
+  }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 999px; font-size: 15px; font-weight: 600;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
+    box-shadow: 0 14px 30px -14px rgba(37, 99, 235, .95);
+  }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+  .btn-ghost:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+  .portrait {
+    position: relative; justify-self: end;
+    width: 100%; max-width: 320px; aspect-ratio: 1 / 1;
+    border-radius: 28px; background: #fff;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+    display: grid; place-items: center; overflow: hidden;
+  }
+  .portrait::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(70% 70% at 70% 20%, rgba(37, 99, 235, .12), transparent 65%);
+  }
+  .portrait .mono {
+    position: relative; z-index: 1;
+    font-size: 74px; font-weight: 800; letter-spacing: -.03em;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .portrait .cap {
+    position: absolute; bottom: 18px; z-index: 1;
+    font-size: 13px; color: var(--ink-mute); letter-spacing: .16em;
+  }
+
+  /* ---------- 数据条 ---------- */
+  .stats {
+    position: relative;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 18px; margin-top: 64px;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow);
+  }
+  .stat b {
+    display: block; font-size: 30px; line-height: 1.2; letter-spacing: -.02em;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stat span { font-size: 14px; color: var(--ink-mute); }
+
+  /* ---------- 通用 section ---------- */
+  section { padding: 76px 0; }
+  section + section { border-top: 1px solid var(--line); }
+  .sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 34px; }
+  .sec-head h2 {
+    margin: 0; font-size: clamp(24px, 3vw, 32px); font-weight: 800; letter-spacing: -.01em;
+  }
+  .sec-head .idx {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    letter-spacing: .18em; text-transform: uppercase;
+  }
+  .sec-head p { margin: 0; color: var(--ink-mute); font-size: 15px; }
+
+  .about { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; }
+  .about p { margin: 0 0 16px; color: var(--ink-soft); }
+  .about p strong { color: var(--ink); font-weight: 700; }
+  .quote {
+    align-self: start;
+    background: linear-gradient(135deg, #fff, var(--accent-soft));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px 28px; box-shadow: var(--shadow);
+  }
+  .quote .mark { font-size: 40px; line-height: 1; color: var(--accent); opacity: .35; }
+  .quote p { margin: 6px 0 0; font-size: 16px; color: var(--ink); }
+  .quote .by { margin-top: 14px; font-size: 13.5px; color: var(--ink-mute); }
+
+  /* ---------- 时间线 ---------- */
+  .timeline { position: relative; padding-left: 26px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 2px;
+    background: linear-gradient(180deg, var(--accent), rgba(124, 58, 237, .25));
+    border-radius: 2px;
+  }
+  .item { position: relative; padding: 0 0 30px 22px; }
+  .item:last-child { padding-bottom: 0; }
+  .item::before {
+    content: ""; position: absolute; left: -26px; top: 9px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--accent);
+  }
+  .item .when { font-size: 13px; color: var(--ink-mute); letter-spacing: .04em; }
+  .item h3 { margin: 4px 0 2px; font-size: 18px; font-weight: 700; }
+  .item .org { font-size: 14.5px; color: var(--accent); font-weight: 600; }
+  .item ul { margin: 10px 0 0; padding-left: 18px; color: var(--ink-soft); }
+  .item li { margin-bottom: 6px; }
+
+  /* ---------- 项目卡片 ---------- */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px 24px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(37, 99, 235, .35);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 22px 44px -18px rgba(37, 99, 235, .45);
+  }
+  .card .tag {
+    align-self: flex-start;
+    font-size: 12.5px; font-weight: 600; letter-spacing: .04em;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 14px;
+  }
+  .card h3 { margin: 0 0 10px; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+  .card p { margin: 0 0 16px; color: var(--ink-soft); font-size: 15px; }
+  .card .kv { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 12.5px; color: var(--ink-mute);
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+    background: #fbfcfe;
+  }
+
+  /* ---------- 技能 ---------- */
+  .skill-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .skill {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
+  }
+  .skill h3 { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+  .skill h3 .ico {
+    width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); font-size: 14px;
+  }
+  .bars { display: grid; gap: 12px; }
+  .bar-row { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: center; font-size: 14px; }
+  .bar-row span { color: var(--ink-soft); }
+  .bar { height: 7px; border-radius: 999px; background: #eef1f7; overflow: hidden; }
+  .bar i {
+    display: block; height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transform-origin: left; transform: scaleX(0); transition: transform 1s cubic-bezier(.22, .61, .36, 1);
+  }
+  .reveal.in .bar i { transform: scaleX(var(--p, .8)); }
+
+  /* ---------- 联系 ---------- */
+  .contact {
+    background: linear-gradient(135deg, #0f172a, #1d2b53 60%, #33215c);
+    color: #fff; border-radius: 26px; padding: 52px 48px;
+    display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between;
+    box-shadow: 0 30px 60px -30px rgba(15, 23, 42, .8);
+  }
+  .contact h2 { margin: 0 0 8px; font-size: clamp(22px, 3vw, 30px); letter-spacing: -.01em; }
+  .contact p { margin: 0; color: rgba(255, 255, 255, .74); max-width: 34em; }
+  .contact-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .contact .btn-white { background: #fff; color: var(--ink); }
+  .contact .btn-line { border: 1px solid rgba(255, 255, 255, .35); color: #fff; }
+  .contact .btn-white:hover, .contact .btn-line:hover { transform: translateY(-2px); }
+
+  footer { padding: 34px 0 46px; color: var(--ink-mute); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+
+  /* ---------- 滚动动画 ---------- */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.22, .61, .36, 1); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .portrait { justify-self: start; max-width: 220px; }
+    .about, .skill-grid { grid-template-columns: 1fr; }
+    .cards, .stats { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .contact { padding: 40px 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .bar i { transition: none; transform: scaleX(var(--p, .8)); }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top">
+      <span class="dot">彭</span>
+      <span>彭涵琳</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#about">关于</a>
+      <a href="#experience">经历</a>
+      <a href="#projects">项目</a>
+      <a href="#skills">技能</a>
+      <a class="nav-cta" href="#contact">联系我 →</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow"><i class="pulse"></i> 复旦大学 · 金融（量化投资）硕士在读</span>
+        <h1>用数据与模型，<br /><span class="grad">读懂市场的语言</span></h1>
+        <p class="lede">
+          我是彭涵琳，数理经济本科出身，现在在复旦大学经济学院读金融（量化投资）方向。
+          我的兴趣在于把宏观与市场的直觉，翻译成可验证的因子、模型与代码。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#projects">看看我做的事 →</a>
+          <a class="btn btn-ghost" href="#contact">联系我</a>
+        </div>
+      </div>
+      <div class="portrait">
+        <div class="mono">PHL</div>
+        <div class="cap">FUDAN · QUANT</div>
+      </div>
+    </div>
+
+    <div class="wrap stats">
+      <div class="stat reveal"><b>2026</b><span>复旦大学经济学院 · 金融（量化投资）硕士入学</span></div>
+      <div class="stat reveal"><b>3 段</b><span>投行、量化私募与高校信息化的实习经历</span></div>
+      <div class="stat reveal"><b>Python · 因子</b><span>从数据清洗到回测的完整投研流程</span></div>
+    </div>
+  </div>
+
+  <section id="about">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">About</span>
+        <h2>关于我</h2>
+      </div>
+      <div class="about">
+        <div class="reveal">
+          <p>
+            本科就读于<strong>复旦大学经济学院数理经济专业</strong>，接受了系统的数学与经济学训练，
+            在高等数学、C 语言程序设计、Python 程序设计与 MATLAB 程序设计等课程中取得 A 的成绩。
+            2026 年 9 月起攻读<strong>金融（量化投资）硕士</strong>。
+          </p>
+          <p>
+            我在<strong>某证券公司投资银行部</strong>完整走过一家企业 IPO 的申报流程：招股说明书、尽职调查底稿、
+            交易所两轮问询回复的撰写与交叉核对，也搭建过可比公司估值模型与 DCF 模型。
+            在<strong>私募基金的量化研究</strong>中，我负责因子挖掘与多因子组合构建，
+            用 IC、IR、夏普比率与最大回撤来检验策略。
+          </p>
+          <p>
+            这些经历让我形成一种习惯：<strong>先问数据能不能回答这个问题，再问模型该怎么写</strong>。
+            我也喜欢把重复的工作自动化，用 Python 与低代码工具把流程沉淀成可复用的工具。
+          </p>
+        </div>
+        <aside class="quote reveal">
+          <div class="mark">&ldquo;</div>
+          <p>把模糊的判断，变成可以被检验的假设；把重复的劳动，交给代码。</p>
+          <div class="by">—— 我的工作方式</div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">Experience</span>
+        <h2>实习与研究经历</h2>
+        <p>投行 · 量化 · 数据工程三个视角</p>
+      </div>
+      <div class="timeline">
+        <div class="item reveal">
+          <div class="when">小型私募基金 · 量化研究</div>
+          <h3>因子挖掘与多因子组合</h3>
+          <div class="org">策略研究实习</div>
+          <ul>
+            <li>覆盖股票、期货与 ETF 等标的，负责因子挖掘与多因子组合构建，用 IC、IR、夏普比率、最大回撤评估策略表现。</li>
+            <li>搭建数据清洗与处理流程，完成多源行情与基本面数据的对齐和因子计算，维护因子库与数据接口。</li>
+            <li>参与策略回测与参数敏感性分析，控制过拟合风险，输出回测报告支持投资决策。</li>
+          </ul>
+        </div>
+        <div class="item reveal">
+          <div class="when">某证券公司 · 投资银行部</div>
+          <h3>IPO 项目执行与估值分析</h3>
+          <div class="org">投行项目实习</div>
+          <ul>
+            <li>深度参与某企业 IPO 项目，协助招股说明书、尽调底稿与问询回复的撰写、修订和交叉核对。</li>
+            <li>使用 Wind、Choice 拉取可比公司与市场交易数据，搭建可比公司估值模型与 DCF 模型，输出定价分析材料。</li>
+            <li>独立撰写行业深度研究备忘录：市场规模测算、增长驱动、竞争格局与政策梳理。</li>
+          </ul>
+        </div>
+        <div class="item reveal">
+          <div class="when">校内信息化部门</div>
+          <h3>数据可视化与办公自动化</h3>
+          <div class="org">技术支持实习</div>
+          <ul>
+            <li>用低代码平台设计并落地数据看板与海报，把运营数据转成直观的可视化报表。</li>
+            <li>参与 ChatGPT 接口封装调用项目（微信机器人），实现智能问答与信息推送能力。</li>
+            <li>研究加解密与爬虫技术，开发 Excel 扩展功能，打通数据采集、处理与输出流程。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">Projects</span>
+        <h2>课程与科研项目</h2>
+        <p>三个把方法用到真实问题上的练习</p>
+      </div>
+      <div class="cards">
+        <article class="card reveal">
+          <span class="tag">本科毕业论文</span>
+          <h3>金融时间序列预测的基础模型</h3>
+          <p>
+            以 FinCast 为参照，构建基于参数解码 Transformer 的预训练架构，引入混合专家（MoE）提升容量，
+            采用分位数损失输出预测区间而非单点估计；在 A 股市场对收益、波动等目标做实证检验。
+          </p>
+          <div class="kv">
+            <span class="chip">Transformer</span>
+            <span class="chip">MoE</span>
+            <span class="chip">分位数损失</span>
+          </div>
+        </article>
+        <article class="card reveal">
+          <span class="tag">量化研究</span>
+          <h3>隔夜因子的复现与检验</h3>
+          <p>
+            复现并检验隔夜收益类因子的有效性，搭建从数据清洗、因子构造到分组回测的完整流程，
+            比较不同市场环境下的表现，并对结果做稳健性与过拟合检验。
+          </p>
+          <div class="kv">
+            <span class="chip">因子检验</span>
+            <span class="chip">分组回测</span>
+            <span class="chip">Python</span>
+          </div>
+        </article>
+        <article class="card reveal">
+          <span class="tag">团队项目</span>
+          <h3>农业信贷 ESG 风险评分模型</h3>
+          <p>
+            负责构建农户与小农经营主体的信用评分模型：清洗与填补经营数据，用主成分分析（PCA）
+            对多维指标降维去相关，再以 Logistic 回归预测违约概率，通过交叉验证评估 AUC 与准确率。
+          </p>
+          <div class="kv">
+            <span class="chip">PCA</span>
+            <span class="chip">Logistic 回归</span>
+            <span class="chip">评分卡</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">Skills</span>
+        <h2>技能与工具</h2>
+      </div>
+      <div class="skill-grid">
+        <div class="skill reveal">
+          <h3><span class="ico">⌨</span> 编程与数据处理</h3>
+          <div class="bars">
+            <div class="bar-row"><span>Python</span><div class="bar"><i style="--p:.92"></i></div></div>
+            <div class="bar-row"><span>MATLAB</span><div class="bar"><i style="--p:.82"></i></div></div>
+            <div class="bar-row"><span>C 语言</span><div class="bar"><i style="--p:.72"></i></div></div>
+            <div class="bar-row"><span>Excel / VBA</span><div class="bar"><i style="--p:.8"></i></div></div>
+          </div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ico">📈</span> 金融数据与研究</h3>
+          <div class="bars">
+            <div class="bar-row"><span>Wind / Choice</span><div class="bar"><i style="--p:.88"></i></div></div>
+            <div class="bar-row"><span>估值建模</span><div class="bar"><i style="--p:.85"></i></div></div>
+            <div class="bar-row"><span>因子与回测</span><div class="bar"><i style="--p:.86"></i></div></div>
+            <div class="bar-row"><span>行业研究</span><div class="bar"><i style="--p:.84"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact reveal">
+        <div>
+          <h2>一起聊聊量化、投研或者自动化</h2>
+          <p>如果你在做因子、模型或者把研究工作流程自动化的尝试，欢迎写信给我。</p>
+        </div>
+        <div class="contact-actions">
+          <a class="btn btn-white" href="mailto:hello@example.com">hello@example.com</a>
+          <a class="btn btn-line" href="https://github.com/linlincodesprout" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year">2026</span> 彭涵琳 · 复旦大学经济学院</span>
+    <span>Built with a single index.html, deployed on Vercel.</span>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.16 });
+
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    el.style.transitionDelay = Math.min(i % 6, 5) * 70 + 'ms';
+    io.observe(el);
+  });
+</script>
+
+</body>
+</html>
