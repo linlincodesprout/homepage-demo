@@ -1,0 +1,30 @@
+# 数据与索引：体积大、可由脚本重新生成（财报 PDF 按作业要求不入库，下载脚本见 fetch_reports*.py）
+data/
+
+# 密钥：只放本机 Windows 凭据管理器 / .env，绝不入库
+.env
+.env.*
+*.key
+
+# 训练中间产物（保留最终版 outputs/dongmi_lora_6轮/）
+outputs/dongmi_lora/
+outputs/dongmi_lora_混合版/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+~$*
+
+# 临时文件
+*.part
+*.tmp
+*.log

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>白酒行业半年报知识库 · 语义地图</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; height:100vh; display:flex; background:#0f1420; color:#e8edf7;
+         font:14px/1.6 "Microsoft YaHei", system-ui, sans-serif; overflow:hidden; }
+  #left { flex:1 1 62%; position:relative; border-right:1px solid #24314a; }
+  canvas { display:block; width:100%; height:100%; cursor:crosshair; }
+  #right { flex:1 1 38%; min-width:420px; display:flex; flex-direction:column; }
+  #ask { padding:14px; background:#131a29; border-bottom:1px solid #24314a; }
+  input, select, button { font:inherit; color:#e8edf7; background:#0f1420;
+         border:1px solid #2c3a56; border-radius:6px; padding:8px 10px; }
+  input { width:100%; }
+  button { cursor:pointer; background:#2563eb; border-color:#2563eb; }
+  button:hover { background:#1d4ed8; }
+  .row { display:flex; gap:8px; margin-top:8px; }
+  #out { flex:1; overflow:auto; padding:14px; }
+  .hit { border:1px solid #24314a; border-radius:8px; padding:8px 10px; margin-bottom:8px;
+         background:#131a29; cursor:pointer; }
+  .hit:hover { border-color:#4f9cf9; }
+  .meta { color:#8fa3c8; font-size:12px; }
+  .badge { display:inline-block; background:#1e293b; border-radius:4px; padding:0 6px;
+           margin-right:6px; font-size:12px; }
+  h3 { margin:0 0 8px; font-size:15px; }
+  #answer { border-left:3px solid #f5b301; padding-left:10px; margin-bottom:14px;
+            white-space:pre-wrap; }
+  #legend { position:absolute; left:12px; bottom:12px; max-width:62%; padding:8px 10px;
+            background:#0f1420cc; border:1px solid #24314a; border-radius:8px; font-size:12px; }
+  #legend span { margin-right:10px; white-space:nowrap; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
+  #tip { position:absolute; display:none; padding:4px 8px; font-size:12px; pointer-events:none;
+         background:#0f1420ee; border:1px solid #2c3a56; border-radius:6px; }
+</style>
+</head>
+<body>
+<div id="left">
+  <canvas id="cv"></canvas>
+  <div id="tip"></div>
+  <div id="legend"></div>
+</div>
+<div id="right">
+  <div id="ask">
+    <input id="q" placeholder="问点什么，例如：贵州茅台上半年直销渠道收入是多少、占营业收入多少？">
+    <div class="row">
+      <select id="vector">
+        <option value="qwen3">向量：Qwen3-Embedding-0.6B</option>
+        <option value="ali">向量：阿里 text-embedding-v4</option>
+      </select>
+      <select id="mode">
+        <option value="hybrid">融合（向量+BM25）</option>
+        <option value="vector">只用向量</option>
+        <option value="bm25">只用 BM25</option>
+      </select>
+      <button id="go">提问</button>
+    </div>
+  </div>
+  <div id="out">
+    <h3>点地图上的点看原文</h3>
+    <div class="meta">每个小点是一个文本块，颜色=公司。提问后会画出金色菱形（问题向量），
+      并把这轮召回的 6 块高亮成金色。</div>
+  </div>
+</div>
+<script>
+const PALETTE = ['#4f9cf9','#f97362','#5dd39e','#f5b301','#b07cf0','#38bdf8',
+                 '#f472b6','#a3e635','#fb923c','#22d3ee','#c084fc','#94a3b8'];
+let MAP = null, W = 0, H = 0;
+const PAD = 30;
+let color = {}, minX = 0, maxX = 1, minY = 0, maxY = 1;
+let selected = null, hitIds = new Set(), queryPt = null, hover = null;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+function esc(s) {
+  return String(s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+function sx(x) { return PAD + (x - minX) / (maxX - minX) * (W - 2 * PAD); }
+function sy(y) { return H - PAD - (y - minY) / (maxY - minY) * (H - 2 * PAD); }
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0f1420';
+  ctx.fillRect(0, 0, W, H);
+  MAP.points.forEach((p, i) => {
+    const c = MAP.coords[i];
+    const isHit = hitIds.has(p.id), isSel = selected === p.id, isHov = hover === i;
+    ctx.beginPath();
+    ctx.arc(sx(c[0]), sy(c[1]), isSel ? 5 : (isHit ? 3.4 : 1.6), 0, Math.PI * 2);
+    ctx.globalAlpha = (isHit || isSel || isHov) ? 1 : 0.72;
+    ctx.fillStyle = isSel ? '#ffffff' : (isHit ? '#f5b301' : (isHov ? '#ffffff' : color[p.company]));
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+  if (queryPt) {
+    ctx.save();
+    ctx.translate(sx(queryPt[0]), sy(queryPt[1]));
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#f5b301';
+    ctx.fillRect(-6, -6, 12, 12);
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeRect(-6, -6, 12, 12);
+    ctx.restore();
+  }
+}
+
+function resize() {
+  const r = cv.parentElement.getBoundingClientRect();
+  W = r.width; H = r.height;
+  const ratio = window.devicePixelRatio || 1;
+  cv.width = W * ratio; cv.height = H * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  if (MAP) draw();
+}
+
+function renderList(rows) {
+  const out = document.getElementById('out');
+  out.innerHTML = '';
+  rows.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'hit';
+    d.innerHTML = '<div><span class="badge">[' + r.n + ']</span><b>' + esc(r.company) +
+      '</b> <span class="meta">第 ' + r.page + ' 页 · ' + esc(r.kind) +
+      ' · 融合名次 ' + r.rrf + '</span></div><div class="meta">' + esc(r.head) + '</div>';
+    d.onclick = () => showChunk(r.id);
+    out.appendChild(d);
+  });
+}
+
+async function showChunk(id) {
+  selected = id;
+  draw();
+  const meta = await (await fetch('/api/chunk?id=' + encodeURIComponent(id))).json();
+  const out = document.getElementById('out');
+  out.innerHTML = '<h3>原文</h3><div class="meta">' + esc(meta.company) + ' · ' +
+    esc(meta.doc) + ' · 第 ' + meta.page + ' 页 · ' + esc(meta.section || '未标注章节') +
+    ' · ' + esc(meta.kind) + '</div><div style="white-space:pre-wrap;margin-top:8px">' +
+    esc(meta.text) + '</div>';
+}
+
+async function ask() {
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  const vector = document.getElementById('vector').value;
+  const mode = document.getElementById('mode').value;
+  const out = document.getElementById('out');
+  out.innerHTML = '<h3>检索并生成中…</h3>';
+  const r = await (await fetch('/api/ask?q=' + encodeURIComponent(q) +
+    '&vector=' + vector + '&mode=' + mode)).json();
+  queryPt = r.query_point;
+  hitIds = new Set(r.hits.map(h => h.id));
+  draw();
+  out.innerHTML = '<h3>召回 ' + r.hits.length + ' 块 · 检索 ' + r.search_seconds +
+    's · 回答 ' + r.answer_seconds + 's</h3><div id="answer"></div>';
+  document.getElementById('answer').textContent = r.answer;
+  const box = document.createElement('div');
+  box.innerHTML = '<h3 style="margin-top:14px">这一轮用的块</h3>';
+  out.appendChild(box);
+  renderListTo(out, r.hits);
+}
+
+function renderListTo(out, rows) {
+  rows.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'hit';
+    d.innerHTML = '<div><span class="badge">[' + r.n + ']</span><b>' + esc(r.company) +
+      '</b> <span class="meta">第 ' + r.page + ' 页 · ' + esc(r.kind) +
+      ' · 融合名次 ' + r.rrf + '</span></div><div class="meta">' + esc(r.head) + '</div>';
+    d.onclick = () => showChunk(r.id);
+    out.appendChild(d);
+  });
+}
+
+document.getElementById('go').onclick = ask;
+document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+cv.addEventListener('mousemove', e => {
+  if (!MAP) return;
+  const r = cv.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  let best = -1, bd = 64;
+  MAP.points.forEach((p, i) => {
+    const d = (sx(MAP.coords[i][0]) - mx) ** 2 + (sy(MAP.coords[i][1]) - my) ** 2;
+    if (d < bd) { bd = d; best = i; }
+  });
+  hover = best >= 0 ? best : null;
+  const tip = document.getElementById('tip');
+  if (hover !== null) {
+    const p = MAP.points[hover];
+    tip.style.display = 'block';
+    tip.style.left = (mx + 12) + 'px';
+    tip.style.top = (my + 8) + 'px';
+    tip.textContent = p.company + ' ' + p.period + ' 第' + p.page + '页 ' + p.kind;
+  } else {
+    tip.style.display = 'none';
+  }
+  draw();
+});
+
+cv.addEventListener('click', () => { if (hover !== null) showChunk(MAP.points[hover].id); });
+window.addEventListener('resize', resize);
+
+(async function init() {
+  MAP = await (await fetch('/api/map')).json();
+  const comps = [...new Set(MAP.points.map(p => p.company))];
+  comps.forEach((c, i) => { color[c] = PALETTE[i % PALETTE.length]; });
+  const xs = MAP.coords.map(c => c[0]), ys = MAP.coords.map(c => c[1]);
+  minX = Math.min(...xs); maxX = Math.max(...xs);
+  minY = Math.min(...ys); maxY = Math.max(...ys);
+  document.getElementById('legend').innerHTML =
+    comps.map(c => '<span><i class="dot" style="background:' + color[c] + '"></i>' + c + '</span>').join('');
+  resize();
+  // 支持 ?q=问题&ask=1 直接出结果（截图和演示用）
+  const params = new URLSearchParams(location.search);
+  if (params.get('q')) {
+    document.getElementById('q').value = params.get('q');
+    if (params.get('vector')) document.getElementById('vector').value = params.get('vector');
+    if (params.get('mode')) document.getElementById('mode').value = params.get('mode');
+    if (params.get('ask')) await ask();
+  }
+})();
+</script>
+</body>
+</html>

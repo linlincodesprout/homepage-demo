@@ -1,0 +1,74 @@
+"""把 B 方向的训练流程导出成一个可以直接在 AutoDL / Colab 里跑的 notebook。
+
+交付要求里写的是「训练笔记本」，所以除了 .py 脚本，再给一份 .ipynb：
+每个格子就是一步（装依赖 → 传数据 → 训练 → 评测 → 看结果）。
+"""
+
+from __future__ import annotations
+
+import json
+
+import config
+
+CELLS = [
+    ("markdown", "# 贵州茅台「董秘」LoRA 微调（第三课作业 B）\n\n"
+                 "基座：Qwen3.5-2B（原生多模态，文本任务）　方法：4bit QLoRA，r=16\n\n"
+                 "数据：404 组「投资者问 / 董秘答（带出处）」，由大模型从 11 份财报原文生成后抽检。\n\n"
+                 "在 AutoDL 镜像上实测：3 轮 5.8 分钟、6 轮 11.0 分钟（RTX 4080S 32G）。"),
+    ("code", "!pip install -q -U torch==2.6.0 torchvision==0.21.0\n"
+             "!pip install -q -U transformers peft bitsandbytes accelerate datasets trl\n"
+             "import torch, transformers\n"
+             "print(torch.__version__, torch.cuda.is_available(), transformers.__version__)"),
+    ("code", "import os\n"
+             "os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'   # 国内下模型走镜像\n"
+             "os.environ['HF_HOME'] = '/root/autodl-tmp/hf'         # 别塞系统盘"),
+    ("markdown", "## 1. 数据长什么样\n\n"
+                 "整段渲染好的结构化文本（Qwen 对话模板），训练时把 `text` 字段原样喂进去。"),
+    ("code", "import json\n"
+             "rows = [json.loads(l) for l in open('sft_train.jsonl', encoding='utf-8')]\n"
+             "print(len(rows), '条；train/val =',\n"
+             "      sum(r['split']=='train' for r in rows), '/', sum(r['split']=='val' for r in rows))\n"
+             "print(rows[0]['text'][:600])"),
+    ("markdown", "## 2. 训练（4bit QLoRA）\n\n"
+                 "可训练参数应为 **10,911,744** —— 和课件录屏里的数字一致。"),
+    ("code", "!python train_lora_dongmi.py --backend peft --epochs 6 --rank 16 \\\n"
+             "    --batch 2 --grad-accum 4 --out lora_dongmi"),
+    ("markdown", "## 3. 四格对照评测\n\n"
+                 "160 条冻结题库（60 条训练过 + 20 条从未训练，各含原问法和换问法），\n"
+                 "上下文由本机预先检索好放进 `eval_with_context.jsonl`，这里只做生成。"),
+    ("code", "!python eval_dongmi.py --configs finetuned,kb_finetuned --adapter lora_dongmi \\\n"
+             "    --out eval_results.jsonl --batch 6 --max-new 200"),
+    ("code", "import json\n"
+             "rows = [json.loads(l) for l in open('eval_results.jsonl', encoding='utf-8')]\n"
+             "for r in rows[:2]:\n"
+             "    print('问：', r['question'])\n"
+             "    print('答：', r['output'][:300], '\\n')"),
+    ("markdown", "## 4. 结论\n\n"
+                 "微调学会的是**格式与口吻**（带出处率 44/60 → 60/60），事实仍然要靠知识库递进来\n"
+                 "（没材料 8% 命中 → 给材料 43% → 微调后再给材料 55%）。\n\n"
+                 "完整四格表见 `B_四格对照.md`，分析见 `B_一页结论.md`。"),
+]
+
+
+def main() -> None:
+    nb = {
+        "cells": [], "metadata": {
+            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+            "language_info": {"name": "python", "version": "3.12"},
+        }, "nbformat": 4, "nbformat_minor": 5,
+    }
+    for kind, src in CELLS:
+        cell = {"cell_type": kind, "metadata": {},
+                "source": src.splitlines(keepends=True)}
+        if kind == "code":
+            cell["execution_count"] = None
+            cell["outputs"] = []
+        nb["cells"].append(cell)
+    path = config.OUT_DIR / "dongmi_lora_6轮" / "train_lora_dongmi.ipynb"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(nb, ensure_ascii=False, indent=1), "utf-8")
+    print(f"notebook → {path}")
+
+
+if __name__ == "__main__":
+    main()

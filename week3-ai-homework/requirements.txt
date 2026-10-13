@@ -1,0 +1,27 @@
+# 作业主线（本机）
+requests
+PyMuPDF
+jieba
+rank_bm25
+numpy
+openai
+keyring
+
+# 向量模型（本机编码问题用；建库那步在 GPU 上跑）
+torch
+transformers==4.57.6
+
+# 网页与评测
+matplotlib
+
+# 深度三（图谱）
+igraph
+leidenalg
+networkx
+
+# 方向 B（微调）
+peft
+bitsandbytes
+accelerate
+datasets
+trl
