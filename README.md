@@ -29,7 +29,6 @@ python -m http.server 8000
   两道全景题的覆盖从 2/12 家提到 12/12。
 - **方向 B（微调）**：贵州茅台 11 份财报 → 660 组「投资者问 / 董秘答」抽检后留 404 条
   → Qwen3.5-2B 4bit QLoRA 微调 → 四格对照（训练过/没训练过 × 原问法/换问法）。
-- 交付物索引与一句话结论见 [`week3-ai-homework/交付说明.md`](./week3-ai-homework/交付说明.md)，
   一页结论 PDF 在 `week3-ai-homework/outputs/pdf/`，截图在同目录 `outputs/screenshots/`。
 
 ## 发布到 Vercel
