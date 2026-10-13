@@ -1,123 +1,78 @@
-# 第三课作业：白酒行业半年报知识库（A）+ 贵州茅台「董秘」微调（B）
+# 第三周作业（方向 A + 方向 B）
 
-两个方向共用同一套语料管线和一个知识库。所有数字都是真跑出来的，评测记录、抽检表、
-结论都在 `outputs/` 里，没有手写凑数。
+> 作业要求「A、B 任选一个方向；两个都做更好」。本目录两个方向都做了，
+> 并且把两条路放在**同一批材料**（上市公司财报）上对照，回答作业那句
+> 「同一批财报，什么问题该建库，什么问题该微调」。
 
-## 目录
+## 目录结构（按方向分开，方便逐条检查）
 
 ```
-config.py               公司清单、路径、切块/检索参数（换机器只改这里）
-fetch_reports.py        巨潮资讯网下载 12 家白酒公司 2026 半年报
-fetch_reports_dongmi.py 下载贵州茅台 2021–2025 年报 + 2021–2026 半年报（共 11 份）
-build_corpus.py         PDF → 正文 + 按行列还原的表格 → 800/120 切块
-build_corpus_dongmi.py  同上，针对茅台 11 份报告
-merge_corpus.py         把茅台历年财报并进同一个知识库（给 B 的对照用）
-build_index_ali.py      阿里 text-embedding-v4 向量（断点续跑）
-build_bm25.py           jieba + BM25 倒排
-retrieval.py            检索层：公司/报告期硬过滤 + 向量/BM25/RRF 融合
-rag.py                  DeepSeek 带角标回答；问题精炼、关键词抽取
-metrics.py              知识侧预处理：跨公司指标表（全景题用）
-webapp.py + web/        语义地图 + 提问 + 带出处回答的页面
-eval_a.py               A 的 10 道题评测（含自动判分）
-panorama_fix.py         全景题补救实验（top6 / top60 / 逐家检索 / 指标表）
-gen_qa_dongmi.py        B：从财报原文生成「投资者问/董秘答」
-dongmi_check.py         B：数字回原文核对 + 抽检表 + 冻结评测集
-dongmi_format.py        B：渲染成 Qwen 对话模板的 SFT 文本
-gpu/                    AutoDL 上跑的脚本（向量编码、LoRA 训练、四格评测）
-graph/                  深度三：建图六步 + 全景题五路对比（详见下节）
-docs/AutoDL使用指南.md   租卡、传文件、跑脚本的操作说明
-data/                   语料、切块、向量、BM25（大文件，可重新生成）
-outputs/                交付物：评测记录、判分表、抽检表、补救实验、一页结论、截图
+week3-ai-homework/
+├── 方向A_财报问答知识库/     ← A 的全部交付物（下面第一节逐条对照作业要求）
+│   ├── 一页结论.pdf / .md
+│   ├── 10题逐题记录.pdf / .md
+│   ├── 截图_问答页面_提问.png / 截图_问答页面_初始.png / 截图_判分表.png
+│   ├── 判分表.md
+│   ├── 延伸_深度三/          ← 加分项：知识图谱答全景题
+│   └── 附件/                ← 第一版翻车记录、全景题补救实验、10 道题与参考答案
+├── 方向B_董秘微调/           ← B 的全部交付物（下面第二节逐条对照作业要求）
+│   ├── 一页结论.pdf / .md
+│   ├── 四格对照表.png / .md
+│   ├── 抽检记录.md
+│   ├── 训练笔记本.ipynb
+│   ├── 训练日志.txt
+│   ├── LoRA权重/
+│   └── 附件/                ← 五轮改进实验对比
+├── 代码/                     ← 全部代码（A、B 共用一套语料管线）
+└── 交付说明_总览.md           ← 交付物 ↔ 文件 的完整对照表
 ```
 
-## 复现步骤
+## 一、方向 A 的作业要求 → 交付物
 
-```powershell
-# 0. 环境
-..\venv\Scripts\python.exe -m pip install pymupdf jieba rank_bm25 numpy transformers openai keyring
+| 作业要求 | 交付物 | 对应代码 |
+|---|---|---|
+| ① 选 10 家以上公司，从交易所/巨潮下载年报半年报全文 | 12 家白酒公司 2026 半年报 + 茅台历年财报，共 18 份 | `代码/fetch_reports.py`、`代码/fetch_reports_dongmi.py` |
+| ② 提取文字，**表格按行列还原**；切块带公司、章节、页码 | 11,047 块（表格块占 52%），每块带公司/章节/页码/块号 | `代码/build_corpus.py`、`代码/build_section_map.py` |
+| ③ 建**向量 + BM25** 索引，做一个能提问、**答案带出处**的页面 | 双向量（Qwen3-Embedding-0.6B + 阿里 v4）+ jieba BM25；网页可提问、答案逐句带角标 | `代码/gpu/embed_chunks.py`、`代码/build_index_ali.py`、`代码/build_bm25.py`、`代码/retrieval.py`、`代码/rag.py`、`代码/webapp.py` + `代码/web/index.html` |
+| ④ 出 **10 道题**（≥2 道跨公司全景题），逐题记录召回/对错/错因 | **`10题逐题记录.pdf`**（每题含三条路线召回明细、给模型的 6 块、完整回答、判定、错因） | `代码/eval_a.py`、`代码/make_10q_record.py` |
+| **交付：页面截图** | `截图_问答页面_提问.png`（语义地图 + 提问 + 带出处回答） | — |
+| **交付：一页结论**（哪类题答得好、哪类翻车、为什么） | **`一页结论.pdf`** | — |
+| （加分）延伸深度三：织成网答全景题 | `延伸_深度三/图谱全景题报告.pdf`、`图谱全景.png` | `代码/graph/` 全套 |
 
-# 1. 取语料（A 十二家 + B 茅台历年）
-python fetch_reports.py
-python fetch_reports_dongmi.py
+**A 的一句话结论**：单点事实题 **8/8 全对**；跨公司全景题基线只覆盖 **2/12 家**（答案不在任何一块里，
+而在十几块之间）；加宽窗口、逐家检索都救不了，离线抽一张跨公司指标表后 **12/12**，
+延伸建知识图谱后 **12/12（18–27 秒）**。
 
-# 2. 抽正文/表格 → 切块 → 合并成一个库
-python build_corpus.py
-python build_corpus_dongmi.py
-python merge_corpus.py
+## 二、方向 B 的作业要求 → 交付物
 
-# 3. 索引：阿里向量（API，约 4 元）+ BM25；本机 Qwen3 向量走 gpu/embed_chunks.py
-python build_index_ali.py
-python build_bm25.py
+| 作业要求 | 交付物 | 对应代码 |
+|---|---|---|
+| ① 选**一家公司**，收集它的一组财报 | 贵州茅台 2021–2025 年报 + 2021–2026 半年报，共 11 份 | `代码/fetch_reports_dongmi.py` |
+| ② 大模型从原文生成问答（投资者问→董秘答，注明报告名与页码） | 生成 660 组 | `代码/gen_qa_dongmi.py` |
+| ② **人工抽检，删掉编造的** | **`抽检记录.md`**（40 条随机样本：问题/答案/原文片段/机器检查 + 人工结论栏） | `代码/dongmi_check.py` |
+| ③ 用 **LoRA** 微调小模型（Qwen3.5-2B） | **`训练笔记本.ipynb`**、`训练日志.txt`、`LoRA权重/`（20.8MB） | `代码/gpu/train_lora_dongmi.py`、`代码/make_notebook.py` |
+| ④ **四格对照**：训练过/没训练过 × 原问法/换问法 | **`四格对照表.png` / `.md`**（16 个格子的答对数、数字命中率、带出处率） | `代码/gpu/eval_dongmi.py`、`代码/dongmi_score.py` |
+| ④ 再和「A 的知识库 + 同一个小模型」比一比 | 同表：`知识库+没微调`／`知识库+微调过` 两行 | `代码/prepare_eval_context.py` |
+| **交付：一页结论** | **`一页结论.pdf`** | — |
 
-# 4. 知识侧预处理 + 评测 + 页面
-python metrics.py
-python eval_a.py
-python panorama_fix.py
-python webapp.py            # http://127.0.0.1:8000
-```
+**B 的一句话结论**：微调学会了**格式与口吻**（带出处率 44/60 → 60/60），
+但没把事实背进去（完全答对始终 5%）；事实要靠知识库递进来（数字命中 8% → 53%），
+微调的真实价值是让它**更会用材料**（同一套检索下完全答对 26% → 34%）。
+**要事实就建库，要稳定的口吻与格式才值得微调。**
 
-向量索引要想完全复现 1,047 万字符那 11,047 个块，需要 GPU（见 `docs/AutoDL使用指南.md`），
-脚本是 `gpu/embed_chunks.py`，4090 上 3.5 分钟。
+## 三、怎么跑起来
 
-## 交付物清单
+见 `代码/README.md`（复现步骤、每条命令、依赖）。两个要点：
 
-| 作业要求 | 对应文件 |
+- **密钥不进仓库**：DeepSeek 与阿里百炼的 key 存在 Windows 凭据管理器里（`代码/save_key.py` 写入），
+  代码里零明文；`.env` 已在 `.gitignore` 中。
+- **财报 PDF 不入库**（作业要求）：`data/` 已 gitignore，跑 `fetch_reports.py` 会自动从巨潮资讯网下载。
+
+## 四、真实花费
+
+| 项目 | 花费 |
 |---|---|
-| A 代码仓库 | 本目录 |
-| A 页面截图 | `outputs/screenshots/A_页面_初始.png`、`A_页面_提问.png` |
-| A 10 道题逐题记录 | `outputs/A_评测记录.md`、`A_判分表.md`、`A_全景题补救实验.md` |
-| A 一页结论 | `outputs/A_一页结论.md` |
-| B 数据生成脚本 + 抽检记录 | `gen_qa_dongmi.py`、`dongmi_check.py`、`outputs/dongmi_抽检表.md` |
-| B 训练脚本 + 权重 | `gpu/train_lora_dongmi.py`；LoRA 权重在 `outputs/dongmi_lora_6轮/`（另存 3 轮版做轮数对比） |
-| B 四格对照表 | `outputs/B_四格对照.md`（原始 640+320 条结果：`outputs/B_四格结果*.jsonl`） |
-| B 一页结论 | `outputs/B_一页结论.md` |
-
-## 深度三（织成网）：把知识图谱加上去
-
-作业 A 原本只能答单公司题（8/10），两道跨公司全景题只覆盖 2/12 家。
-按课件的六步补了知识图谱：选材 600 块 → 抽实体关系（**12,498 实体 / 21,942 关系**）
-→ 合并描述（744 个）→ **Leiden** 社区聚类（4 层）→ 社区报告（**1,244 份**）→ 向量化入库。
-
-```powershell
-python graph/select_blocks.py --per-company 50   # ① 选材
-python graph/extract.py --workers 8              # ② 抽实体与关系（要调大模型）
-python graph/build_graph.py                      # ③④ 合并描述 + Leiden 聚类
-python graph/community_reports.py                # ⑤ 社区报告（要调大模型）
-python graph/export_texts.py                     # ⑥ 导出待编码文本
-#    在 GPU 上：python gpu/embed_generic.py --in embed_texts.jsonl --out graph_vectors
-python graph/run_panorama.py                     # 三道全景题 × 五条路线
-python graph/render.py --top 180                 # 图谱配图
-python graph/query_graph.py --mode global --q "…"  # 查图（global）
-python graph/query_graph.py --mode local  --q "…"  # 查图（local）
-```
-
-结果、五路对比、两个工程坑的复盘见 `outputs/A_深度三_图谱全景题.md`。
-
-## B 方向：从造数据到四格对照的完整链路
-
-```powershell
-python fetch_reports_dongmi.py     # 茅台 11 份财报
-python build_corpus_dongmi.py      # 5,690 块
-python gen_qa_dongmi.py            # 生成 660 组投资者问答（DeepSeek）
-python dongmi_check.py             # 数字回原文核对 + 40 条抽检表 + 冻结评测集
-python dongmi_format.py            # 渲染成 Qwen 对话模板（结构化文本）
-python prepare_eval_context.py     # 本机算好 160 条的检索上下文
-```
-
-GPU 端（AutoDL，脚本在 `gpu/`）：
-
-```bash
-python train_lora_dongmi.py --backend peft --epochs 6 --rank 16 --batch 2 --grad-accum 4 --out lora_dongmi6
-python eval_dongmi.py --configs finetuned,kb_finetuned --adapter lora_dongmi6 --out eval_results6.jsonl
-```
-
-回到本机：`python dongmi_score.py` 出四格对照表。
-
-> 环境备注：Qwen3.5-2B 的模型类型是 `qwen3_5`，只有 transformers≥5 认识；而 transformers 5 要求
-> torch≥2.6。所以实例上把 torch 升到 2.6.0+cu124 后，用 `peft + bitsandbytes` 做 4bit QLoRA
-> （unsloth 的依赖解析会把 torch 换成 CUDA 13 版本，要多下 3GB，因此没用它）。
-
-## 密钥
-
-DeepSeek 和阿里百炼的 key 都放在 Windows 凭据管理器里（`save_key.py`），
-代码里没有任何明文密钥，仓库里也不会有。
+| 阿里 text-embedding-v4（11,047 块 + 图谱入库） | ≈ 6 元 |
+| DeepSeek（造问答、评测、建图六步、抽检） | ≈ 25 元 |
+| AutoDL GPU 按小时（向量编码 + 2 次 LoRA 训练 + 评测） | ≈ 15 元 |
+| **合计** | **≈ 45 元** |
