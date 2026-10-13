@@ -24,7 +24,7 @@ EMB_FILES = {
 }
 
 # 公司名/简称 → 规范公司名。问题里出现公司名时，直接把它当成硬过滤条件。
-# 课件里的说法：「公司名是最强的锚」「每块带公司标签，检索时才分得清是谁的数」。
+# 课程讲义中的说法：「公司名是最强的锚」「每块带公司标签，检索时才分得清是谁的数」。
 COMPANY_ALIASES = {
     "贵州茅台": ["贵州茅台", "茅台"],
     "五粮液": ["五粮液"],
@@ -51,7 +51,7 @@ def detect_company(query: str) -> str | None:
 def detect_period(query: str) -> str | None:
     """从问题里认报告期：『2024年上半年/半年度』→ 2024H1，『2024年年度报告』→ 2024A。
 
-    这是课件里「剔除废止版本」的同类动作——法规库靠时效性字段，我们靠报告期标签。
+    这是课程讲义中「剔除废止版本」的同类动作——法规库靠时效性字段，我们靠报告期标签。
     """
     m = re.search(r"(20\d\d)\s*年\s*(半年度|上半年|中期|中报)", query)
     if m:
@@ -164,7 +164,7 @@ class Retriever:
         if mask is not None:
             scores = scores + mask
         order = np.argsort(-scores)[:k]
-        # 零分候选一个查询词都没命中，只是排序里凑数的，不该去抢融合名次
+        # 零分候选一个查询词都没命中，只是排序里仅用于补齐数量的，不该去抢融合名次
         return [{"idx": int(i), "bm25_score": float(scores[i])}
                 for i in order if scores[i] > 0]
 
@@ -188,7 +188,7 @@ class Retriever:
         if mode in ("bm25", "hybrid"):
             lists.append(("bm25", self.bm25_search(query, company=company, period=period)))
 
-        # BM25 容易被通用词蹭名次，权重压低一半；向量是主线（课件口径：向量管意思、关键词管字面）
+        # BM25 容易被通用词蹭名次，权重压低一半；向量是主线（课程讲义口径：向量管意思、关键词管字面）
         weights = {"vector": 1.0, "bm25": 0.5}
         merged: dict[int, dict] = {}
         for source, hits in lists:

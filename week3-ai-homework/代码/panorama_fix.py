@@ -101,7 +101,7 @@ def main() -> None:
         ctx = (f"【跨公司指标表（离线从各家公司半年报『主要会计数据』抽取）】\n{table}\n\n"
                f"【相关原文块】\n{build_context(base)}")
         ans = chat(ANSWER_SYSTEM,
-                   f"{ctx}\n\n【问题】\n{item['q']}\n\n请先把12家公司逐条列全（公司+数字），"
+                   f"{ctx}\n\n【问题】\n{item['q']}\n\n请首先12家公司逐条列全（公司+数字），"
                    f"最后再给出结论。逐句带角标。")
         trials["D 指标表+top6"] = (base, ans)
 
@@ -117,7 +117,7 @@ def main() -> None:
 
     lines = ["# 作业 A · 全景题补救实验", "",
              "题目一次问 12 家公司，向量检索一次取前 6 块时窗口里只装得下 1-2 家。", "",
-             "| 题号 | 做法 | 喂进去的块数 | 覆盖到的公司数 | 没覆盖到的 |",
+             "| 题号 | 做法 | 输入的块数 | 覆盖到的公司数 | 没覆盖到的 |",
              "|---|---|---|---|---|"]
     for qid, trials in report.items():
         for name, r in trials.items():

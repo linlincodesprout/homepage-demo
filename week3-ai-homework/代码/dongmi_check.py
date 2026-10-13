@@ -1,6 +1,6 @@
 """B 方向第二步：抽检 + 切分训练/评测集。
 
-课件要求「人工抽检删掉编造的」。这里做两层：
+本作业要求「人工抽检删掉编造的」。这里做两层：
   第一层（机器）：把答案里的每个数字回到原文里核对，对不上的标成可疑；
                  同时检查出处是否写成「（来源：报告全名 第 X 页）」并且和块元数据一致。
   第二层（人工）：导出一张抽检表 outputs/dongmi_抽检表.md，随机抽 40 条并排显示
@@ -106,7 +106,7 @@ def paraphrase(question: str) -> str:
         return cache[question]
     new = chat(
         "把下面这个投资者问题换一种说法，意思完全不变，但用词和句式要明显不同。"
-        "只输出改写后的一句话。",
+        "只输出改写后的小结。",
         question, temperature=0.9).strip().splitlines()[0].strip()
     cache[question] = new
     PARA_CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), "utf-8")

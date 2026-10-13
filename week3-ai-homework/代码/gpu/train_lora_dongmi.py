@@ -2,7 +2,7 @@
 
 课程同款：Colab/免费卡 + 4bit QLoRA + Qwen3.5-2B（LoRA 页、unsloth 页、录屏页都是这套）。
 本脚本两种后端：
-    --backend unsloth （默认，课件用的框架，最快）
+    --backend unsloth （默认，课程讲义用的框架，最快）
     --backend peft    （unsloth 装不上时的退路：transformers + peft + bitsandbytes）
 
 用法（实例里）：

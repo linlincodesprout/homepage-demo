@@ -1,11 +1,11 @@
 # AutoDL 租卡指南（本作业用）
 
 > 只有两件事需要 GPU：① 用 Qwen3-Embedding-0.6B 给 8,098 个文本块算向量；② 用 Qwen3.5-2B 做 LoRA 微调。
-> 这两件事在 **RTX 4090 24GB** 上都能跑，不需要 A100。A100 是老师口头说的 27B 版本才需要。
+> 这两件事在 **RTX 4090 24GB** 上都能跑，不需要 A100。A100 是仅 27B 版本需要。
 
 ## 一、注册与充值
 
-1. 打开 https://www.autodl.com ，用手机号注册，完成**实名认证**（要身份证，学生认证还能便宜一点）。
+1. 打开 https://www.autodl.com ，用手机号注册，完成**实名认证**（要身份证，学生认证还能成本较低一点）。
 2. 控制台右上角「充值」，**充 20 元**就够整个作业（4090 约 1.6–2.4 元/小时，全程含调试 5–8 小时 ≈ 10–20 元）。
 3. 计费规则：**开机才计费，关机不计 GPU 费**；数据保留在实例里。中途不用了随时关机，钱按分钟扣。
 
@@ -16,7 +16,7 @@
 | 用途 | 推荐卡 | 显存 | 参考价 |
 |---|---|---|---|
 | 本作业（0.6B 编码 + 2B QLoRA） | **RTX 4090** | 24GB | 1.6–2.4 元/小时 |
-| 想顺手试 27B QLoRA | A100-PCIE | 40GB | 4–5 元/小时 |
+| 想同时试 27B QLoRA | A100-PCIE | 40GB | 4–5 元/小时 |
 | 27B 不量化 LoRA | A100-SXM4 | 80GB | 7–9 元/小时 |
 
 2. 点「1 张」→ 选**镜像**：
@@ -33,7 +33,7 @@
   ```
   ssh -p 12345 root@connect.xxxx.seetacloud.com
   ```
-  密码在控制台实例信息里（一串随机字符）。**如果你愿意把这行 SSH 命令和密码给我，我可以直接登上去把 ①② 全部跑完**，你只需要在控制台开关机。
+  密码在控制台实例信息里（一串随机字符）。**如可提供该 SSH 登录命令与密码，则 ① ② 两步均可由脚本代跑**，实例的开关机由使用者自行控制。
 
 ## 四、传文件（只有一个要点）
 
@@ -42,7 +42,7 @@
 - JupyterLab：左侧文件区进 `autodl-tmp`，直接把 zip 拖进去，然后在 Terminal 里 `unzip xx.zip`。
 - 命令行：`scp -P 端口 本地文件 root@host:/root/autodl-tmp/`
 
-要上传的东西（我会打包好一个 `gpu_bundle.zip`，几 MB）：
+需上传的文件（已打包为 `gpu_bundle.zip`，约数 MB）：
 
 ```
 gpu_bundle.zip
@@ -71,7 +71,7 @@ python train_lora_dongmi.py --data dongmi_qa.jsonl --out lora_dongmi
 - `emb_qwen3.npy` + `emb_qwen3_meta.json` → 本机做检索
 - `lora_dongmi/` 里的 `adapter_model.safetensors` + 四格对照的评测输出 → 本机对照表
 
-## 六、常见坑
+## 六、常见问题
 
 - **连接断**：关掉浏览器不等于实例关机，但长时间训练要用 `tmux` 或 `nohup`，避免 SSH 掉线把训练带走。
   ```bash
@@ -82,7 +82,7 @@ python train_lora_dongmi.py --data dongmi_qa.jsonl --out lora_dongmi
 - **下载慢**：国内实例连 HuggingFace 不稳，统一用镜像站 `export HF_ENDPOINT=https://hf-mirror.com`。
 - **不用了就关机**，别直接删实例（删了要重新配环境）。
 
-## 七、多少钱、花多久（实际情况按第一次跑通算）
+## 七、多少钱、花多久（实际情况按第一次成功运行算）
 
 | 步骤 | 时间 | 花费 |
 |---|---|---|

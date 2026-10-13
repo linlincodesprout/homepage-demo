@@ -1,6 +1,6 @@
 """把交付用的 markdown 转成 PDF 和截图（作业要求：一页结论 PDF + 截图）。
 
-用本机 Chrome 无头模式打印 PDF / 截图——它对中文字体支持最好，不用额外装东西。
+用本机 Chrome 无头模式打印 PDF / 截图——它对中文字体支持最好，无需额外安装依赖。
 
 用法：
     python make_deliverables.py

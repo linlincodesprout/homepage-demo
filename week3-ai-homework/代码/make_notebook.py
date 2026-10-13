@@ -21,16 +21,16 @@ CELLS = [
              "print(torch.__version__, torch.cuda.is_available(), transformers.__version__)"),
     ("code", "import os\n"
              "os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'   # 国内下模型走镜像\n"
-             "os.environ['HF_HOME'] = '/root/autodl-tmp/hf'         # 别塞系统盘"),
-    ("markdown", "## 1. 数据长什么样\n\n"
-                 "整段渲染好的结构化文本（Qwen 对话模板），训练时把 `text` 字段原样喂进去。"),
+             "os.environ['HF_HOME'] = '/root/autodl-tmp/hf'         # 避免写入系统盘"),
+    ("markdown", "## 1. 数据内容构成\n\n"
+                 "整段渲染好的结构化文本（Qwen 对话模板），训练时把 `text` 字段原样输入。"),
     ("code", "import json\n"
              "rows = [json.loads(l) for l in open('sft_train.jsonl', encoding='utf-8')]\n"
              "print(len(rows), '条；train/val =',\n"
              "      sum(r['split']=='train' for r in rows), '/', sum(r['split']=='val' for r in rows))\n"
              "print(rows[0]['text'][:600])"),
     ("markdown", "## 2. 训练（4bit QLoRA）\n\n"
-                 "可训练参数应为 **10,911,744** —— 和课件录屏里的数字一致。"),
+                 "可训练参数应为 **10,911,744** —— 和课程讲义录屏里的数字一致。"),
     ("code", "!python train_lora_dongmi.py --backend peft --epochs 6 --rank 16 \\\n"
              "    --batch 2 --grad-accum 4 --out lora_dongmi"),
     ("markdown", "## 3. 四格对照评测\n\n"

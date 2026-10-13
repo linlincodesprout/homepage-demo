@@ -104,7 +104,7 @@ def extract_pdf(pdf_path: Path, meta: dict) -> list[dict]:
 
 
 def split_text(text: str, size: int, overlap: int) -> list[str]:
-    """按句末收尾的滑窗切块，避免把一句话从中间劈开。"""
+    """按句末收尾的滑窗切块，避免把小结从中间劈开。"""
     text = clean(text)
     if len(text) <= size:
         return [text] if text else []
